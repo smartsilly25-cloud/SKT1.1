@@ -1,0 +1,41 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:   # bisa dijalankan manual dari tab Actions
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v4
+
+      - name: Pasang Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Pasang paket
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build EXE
+        run: >
+          pyinstaller --noconfirm --windowed --name JPGtoSketsa
+          --add-data "assets;assets"
+          --collect-all imageio_ffmpeg
+          --collect-all onnxruntime
+          main.py
+
+      - name: Kompres hasil
+        shell: pwsh
+        run: Compress-Archive -Path dist/JPGtoSketsa -DestinationPath JPGtoSketsa-Windows.zip
+
+      - name: Unggah hasil
+        uses: actions/upload-artifact@v4
+        with:
+          name: JPGtoSketsa-Windows
+          path: JPGtoSketsa-Windows.zip
